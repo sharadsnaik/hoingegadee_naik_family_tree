@@ -1,0 +1,136 @@
+[
+  {
+    "_id": "68f9184ae7343d3b2abe1fee",
+    "uniq_id": "shi_jat",
+    "name": "Narayan Naik",
+    "father_name": "Shinnuu",
+    "mother_name": "jattama",
+    "wife_name": "Gowri",
+    "children": [
+      {
+        "uniq_id": "nar_gow_1",
+        "name": "Shinnu Naik"
+      },
+      {
+        "uniq_id": "nar_gow_2",
+        "name": "Rama Naik"
+      },
+      {
+        "uniq_id": "nar_gow_3",
+        "name": "shankar Narayan Naik"
+      },
+      {
+        "uniq_id": "nar_gow_4",
+        "name": "ss Narayan Naik"
+      }
+    ],
+    "Phone_number": "000000",
+    "adress": "abbali"
+  },
+  {
+    "_id": "68f918b5e7343d3b2abe1fef",
+    "uniq_id": "nar_gow_1",
+    "name": "Shinnu Naik",
+    "father_name": "Narayan Naik",
+    "mother_name": "Gowri",
+    "wife_name": "Netravati",
+    "children": [
+      {
+        "uniq_id": "shi_net_1",
+        "name": "sharad"
+      }
+    ],
+    "Phone_number": "9481143075",
+    "adress": "Kujalli"
+  },
+  {
+    "_id": "68f9192e8460da967cfa8863",
+    "uniq_id": "nar_gow_2",
+    "name": "Rama Naik",
+    "father_name": "Narayan Naik",
+    "mother_name": "Gowri",
+    "wife_name": "Raj",
+    "children": [],
+    "Phone_number": "9481143075",
+    "adress": "Kujalli"
+  },
+  {
+    "_id": "68f91972faf4320bf1a730e8",
+    "uniq_id": "nar_gow",
+    "name": "aaaNaik",
+    "father_name": "Narayan Naik",
+    "mother_name": "Gowri",
+    "wife_name": "aaa",
+    "children": [],
+    "Phone_number": "9481143075",
+    "adress": "Kujalli"
+  },
+  {
+    "_id": "68f9da92f1fa302fd5642ac7",
+    "uniq_id": "shi_net",
+    "name": "sharad",
+    "father_name": "Shinnu Naik",
+    "mother_name": "Netravti",
+    "wife_name": "Nidhi",
+    "children": [
+      "aa"
+    ],
+    "Phone_number": "126186312",
+    "adress": "iweyfcgwuiy"
+  },
+  {
+    "_id": "68f9db41f1fa302fd5642ac8",
+    "uniq_id": "shi_net_1",
+    "name": "sharad",
+    "father_name": "Shinnu Naik",
+    "mother_name": "Netravati",
+    "wife_name": "Nidhi",
+    "children": [
+      "aa"
+    ],
+    "Phone_number": "126186312",
+    "adress": "iweyfcgwuiy"
+  },
+  {
+    "_id": "68fa35cdf6471a1c0aab9768",
+    "uniq_id": "nar_gow_3",
+    "name": "shankar Narayan Naik",
+    "father_name": "Narayan Naik",
+    "mother_name": "Gowri",
+    "wife_name": "Shymala",
+    "children": [
+      {
+        "uniq_id": "sha_shy_1",
+        "name": [
+          "Manohara",
+          "Shrinidhi"
+        ]
+      }
+    ],
+    "Phone_number": "2222",
+    "adress": "ssss"
+  },
+  {
+    "_id": "68fa3b39d363bf67a2607b7a",
+    "uniq_id": "nar_gow_4",
+    "name": "ss Narayan Naik",
+    "father_name": "Narayan Naik",
+    "mother_name": "Gowri",
+    "wife_name": "Shymala",
+    "children": [
+      {
+        "uniq_id": "ss _shy_0",
+        "name": "harshitsa"
+      },
+      {
+        "uniq_id": "ss _shy_1",
+        "name": "Shrinidhi"
+      }
+    ],
+    "Phone_number": "2222",
+    "adress": "ssss"
+  }
+]
+
+
+

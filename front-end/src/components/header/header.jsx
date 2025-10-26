@@ -3,7 +3,7 @@ import './header.css'
 const header = () => {
   return (
     <div className='header-top-top'>
-        <div className="headermain">ಹೋಯಿನಗೆ ಗದ್ದೆ  ನೈಕರು 
+        <div className="headermain">ಹೋಯಿಗೀಗದ್ದೆ ಕುಟುಂಬ ವೃಕ್ಷ ವಿವರಣೆ. 
       </div>
       <div className='instruction'>
             <div className="legend-card">
