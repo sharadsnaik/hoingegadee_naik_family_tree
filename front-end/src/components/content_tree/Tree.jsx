@@ -6,6 +6,7 @@ const FamilyTree = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [familyData, setFamilyData] = useState([]);
   const [formData, setFormData] = useState({
+    image_url: '',
     name: '',
     father_name: '',
     mother_name: '',
@@ -37,6 +38,21 @@ const FamilyTree = () => {
       }
     } catch (error) {
       console.error('Error fetching family data:', error);
+    }
+  };
+
+  // Handle image upload
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({
+          ...prev,
+          image_url: reader.result
+        }));
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -127,6 +143,7 @@ const FamilyTree = () => {
     setSubmitStatus('Submitting...');
 
     const dataToSubmit = {
+      image_url: formData.image_url || '',
       name: formData.name,
       father_name: formData.father_name,
       mother_name: formData.mother_name,
@@ -153,6 +170,7 @@ const FamilyTree = () => {
         setTimeout(() => {
           setShowPopup(false);
           setFormData({
+            image_url: '',
             name: '',
             father_name: '',
             mother_name: '',
@@ -175,6 +193,7 @@ const FamilyTree = () => {
   const handleClosePopup = () => {
     setShowPopup(false);
     setFormData({
+      image_url: '',
       name: '',
       father_name: '',
       mother_name: '',
@@ -197,7 +216,20 @@ const FamilyTree = () => {
           <div className="couple-container">
             <div className="member-card">
               <div className={`member-circle ${member.color}`}>
-                <Users size={32} />
+                {member.image_url ? (
+                  <img 
+                    src={member.image_url} 
+                    alt={member.name} 
+                    style={{
+                      width: '100%', 
+                      height: '100%', 
+                      borderRadius: '50%', 
+                      objectFit: 'cover'
+                    }} 
+                  />
+                ) : (
+                  <Users size={32} />
+                )}
               </div>
               <div className="member-name">{member.name}</div>
             </div>
@@ -265,6 +297,17 @@ const FamilyTree = () => {
             <h2 className="popup-title">Add Family Member</h2>
             
             <div className="member-form">
+              <div className="form-group">
+                <label htmlFor="image">Profile Image</label>
+                <input
+                  type="file"
+                  id="image"
+                  name="image"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                />
+              </div>
+
               <div className="form-group">
                 <label htmlFor="name">Name *</label>
                 <input

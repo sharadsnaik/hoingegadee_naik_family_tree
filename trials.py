@@ -14,10 +14,11 @@ load_dotenv()
 app = FastAPI()
 app.add_middleware(
      CORSMiddleware,
-    allow_origins=['http://localhost:3000'],
+    allow_origins=['http://localhost:3000', 'http://117.205.137.97'],
+#     allow_origins=["http://localhost:3000"],  
     allow_credentials=True,
-    allow_methods=["*"],  # Include OPTIONS for preflight
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],  # Include OPTIONS for preflight
+    allow_headers=["Content-Type", "Authorization"],
 
 )
 import os
@@ -82,6 +83,10 @@ async def submit_form(data: form_data_from_frontend):
                 unique_id_gen= f'{father_name}_{mother_name}'
                 print('Generated unique id', unique_id_gen)
         else:
+                # Building a logic for bypassign the genrating the unique for chikdren name if parents already added thier children name
+        # if data.name == parent.get(children['name']) and data.father_name == parent.name and data.mother_name == parent.wife_name:
+        #         unique_id_gen = parent['_id'].get('unique_id')
+
                 children_count = parent.get('children', [])
                 
                 existing_child = next((child for child in children_count if child['name'] == data.name), None)
@@ -91,12 +96,16 @@ async def submit_form(data: form_data_from_frontend):
                         unique_id_gen = existing_child['uniq_id']
                 else:
                         unique_id_gen = f'{father_name}_{mother_name}_{len(children_count) + 1}'
+                        # print('parent exist checking number of childrent',children_count, 'and its length',{len(children_count)} )
 
                         new_children_update = {'uniq_id':unique_id_gen, 'name': data.name}
                         await collection_name_mongodb.update_one(
                         {"_id": parent["_id"]},
-                        {"$push":{"children": new_children_update}} )
-                
+                        {"$push":{"children": new_children_update}}
+                        # {"$addToSet":{"children": new_children_update}}
+                )
+                print(f'His parent exists so updated in parent{parent['name']} in childern feild {data.name}')
+
         # Logic for adding children if user provided thier children name
         children = []
         if data.children and isinstance(data.children, list):
@@ -117,7 +126,12 @@ async def submit_form(data: form_data_from_frontend):
                        if child_nam not in existing_names:
                               child_uniq_id = f'{his_name}_{his_wife_name}_{idx}'
                               children.append({"uniq_id": child_uniq_id, "name": child_nam})
-
+                # for idx, child_nam in enumerate(data.children, start=curent_child_count):
+                #         child_uniq_id = f'{his_name}_{his_wife_name}_{idx}'
+                #         children.append({"uniq_id":child_uniq_id,
+                #           "name": child_nam})
+             
+        
         # Build logic for first insertion of child later father
     
 
@@ -135,8 +149,41 @@ async def submit_form(data: form_data_from_frontend):
 
         # Logic for child added first → Later parent added → system should automatically link the child to the parent, and reuse same uniq_id
 
-        result =await collection_name_mongodb.insert_one(document)
+        # if document['wife_name']:
+        #         first_added_child= collection_name_mongodb.find({
+        #                 'father_name':document['name'],
+        #                 'mother_name':document['wife_name'],
+        #                 "uniq_id":{"$exists":True}
+        #         })
 
+        #         async for child in first_added_child:
+        #                 existing = next((c for c in document.get("children", []) if c["name"] == child["name"]), None)
+                        
+        #                 if not existing:
+        #                         # Add to parent's children
+        #                         await collection_name_mongodb.update_one(
+        #                                 {"_id": document["_id"]},
+        #                                 {"$push": {"children": {"uniq_id": child["uniq_id"], "name": child["name"]}}}
+        #                                 )
+
+        # # Also ensure child's unique_id stays same and no mismatch
+        #                 await collection_name_mongodb.update_one(
+        #     {"_id": child["_id"]},
+        #     {"$set": {
+        #         "father_name": document["name"],
+        #         "mother_name": document["wife_name"]
+        #     }})
+
+
+        # collection_name_mongodb.insert_one(data.model_dump())
+        result =await collection_name_mongodb.insert_one(document)
+        # if parent:
+        #         new_children_update = {'uniq_id':unique_id_gen, 'name': data.name}
+        #         await collection_name_mongodb.update_one(
+        #                 {"_id": parent["_id"]},
+        #                 {"$push":{"children": new_children_update}}
+        #         )
+        #         print(f'His parent exists so updated in parent{parent['name']} in childern feild {data.name}')
         parent_id = result.inserted_id  # ✅ Now we have _id
         if data.wife_name:
             first_added_children_cursor = collection_name_mongodb.find({
@@ -246,4 +293,4 @@ async def delete_all_data():
 
 
 if __name__ == '__main__':
-        uvicorn.run('main:app', host='0.0.0.0', port=8000, reload=True)        
+        uvicorn.run('main:app', host='127.0.0.1', port=8000, reload=True)        
