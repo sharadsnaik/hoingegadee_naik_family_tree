@@ -14,9 +14,7 @@ load_dotenv()
 app = FastAPI()
 app.add_middleware(
      CORSMiddleware,
-    allow_origins=['http://localhost:3000',
-                   'https://hoingegadee-naik-family-tree.onrender.com',
-                   'http://192.168.1.39'],
+    allow_origins=['*'],
     allow_credentials=True,
     allow_methods=["*"],  # Include OPTIONS for preflight
     allow_headers=["*"],
