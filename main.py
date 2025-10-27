@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from typing import List
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
-import uvicorn, aiosmtplib
+import uvicorn, aiosmtplib,ssl
 from email.mime.text import MIMEText
 from fastapi import HTTPException
 from bson import ObjectId
@@ -14,7 +14,9 @@ load_dotenv()
 app = FastAPI()
 app.add_middleware(
      CORSMiddleware,
-    allow_origins=['http://localhost:3000'],
+    allow_origins=['http://localhost:3000',
+                   'https://hoingegadee-naik-family-tree.onrender.com',
+                   'http://192.168.1.39'],
     allow_credentials=True,
     allow_methods=["*"],  # Include OPTIONS for preflight
     allow_headers=["*"],
