@@ -14,7 +14,7 @@ load_dotenv()
 app = FastAPI()
 app.add_middleware(
      CORSMiddleware,
-    allow_origins=['http://localhost:3000', 'http://117.205.137.97'],
+    allow_origins=['*'],
 #     allow_origins=["http://localhost:3000"],  
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],  # Include OPTIONS for preflight
@@ -28,19 +28,22 @@ collection_name_mongodb = db_name['Family_data_collection_V1']
 print(f"✅ Connected to MongoDB: {db_name}")
 
 async def send_email(subject: str, message:str):
-       email = MIMEText(message)
-       email["From"] = os.getenv("EMAIL_USER")
-       email["To"] = os.getenv("EMAIL_USER")
-       email['Subject'] = subject
-
-       await aiosmtplib.send(
-              email,
-              hostname=os.getenv('EMAIL_HOST'),
-              port=int(os.getenv("EMAIL_PORT")),
-              start_tls=True,
-              username=os.getenv("EMAIL_USER"),
-              password=os.getenv("EMAIL_PASS")
-       )
+        try:
+              email = MIMEText(message)
+              email["From"] = os.getenv("EMAIL_USER")
+              email["To"] = os.getenv("EMAIL_USER")
+              email['Subject'] = subject
+       
+              await aiosmtplib.send(
+                     email,
+                     hostname=os.getenv('EMAIL_HOST'),
+                     port=int(os.getenv("EMAIL_PORT")),
+                     start_tls=True,
+                     username=os.getenv("EMAIL_USER"),
+                     password=os.getenv("EMAIL_PASS")
+              )
+        except Exception as e:
+              print("Failed in sending email", e)
 
 class form_data_from_frontend(BaseModel):
         # unique_id: str
@@ -212,6 +215,7 @@ async def submit_form(data: form_data_from_frontend):
                 )
         # LOgic for counting the number of member are using the service
         total_members = await collection_name_mongodb.count_documents({})
+        print('total members in doc',total_members)
         if total_members % 5 == 0:
                last_5_cursor = collection_name_mongodb.find({}, {"name": 1}).sort("_id", -1).limit(5)
                last_5_names = []
@@ -293,4 +297,4 @@ async def delete_all_data():
 
 
 if __name__ == '__main__':
-        uvicorn.run('main:app', host='127.0.0.1', port=8000, reload=True)        
+        uvicorn.run('trials:app', host='127.0.0.1', port=8000, reload=True)        

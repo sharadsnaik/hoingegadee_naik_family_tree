@@ -5,16 +5,21 @@ from pydantic import BaseModel
 from typing import List
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
-import uvicorn, aiosmtplib,ssl
+import uvicorn, httpx,ssl
 from email.mime.text import MIMEText
 from fastapi import HTTPException
 from bson import ObjectId
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+
 
 load_dotenv()
 app = FastAPI()
 app.add_middleware(
      CORSMiddleware,
-    allow_origins=['*'],
+    allow_origins=['http://localhost:3000',
+                   'https://hoingegadee-naik-family-tree-1.onrender.com',
+                   'http://192.168.1.39'],
     allow_credentials=True,
     allow_methods=["*"],  # Include OPTIONS for preflight
     allow_headers=["*"],
@@ -26,20 +31,37 @@ db_name = client['Family_tree_DATABASE']
 collection_name_mongodb = db_name['Family_data_collection_V1']
 print(f"✅ Connected to MongoDB: {db_name}")
 
-async def send_email(subject: str, message:str):
-       email = MIMEText(message)
-       email["From"] = os.getenv("EMAIL_USER")
-       email["To"] = os.getenv("EMAIL_USER")
-       email['Subject'] = subject
 
-       await aiosmtplib.send(
-              email,
-              hostname=os.getenv('EMAIL_HOST'),
-              port=int(os.getenv("EMAIL_PORT")),
-              start_tls=True,
-              username=os.getenv("EMAIL_USER"),
-              password=os.getenv("EMAIL_PASS")
-       )
+async def send_email(subject: str, message:str):
+        email_From = os.getenv("EMAIL_USER")
+        email_To = os.getenv("EMAIL_USER")
+
+        url = 'https://api.mailjet.com/v3.1/send'
+        payload = {
+        "Messages": [
+            {
+                "From": {"Email": email_From, "Name": "Family App"},
+                "To": [{"Email": email_To, "Name": "Admin"}],
+                "Subject": subject,
+                "TextPart": message,
+                # "HTMLPart": "<h3>HTML message</h3>",   # optional
+            }
+        ]
+    }
+
+        try:
+               async with httpx.AsyncClient(timeout= 10.0) as client:
+                      res = await client.post(url, json= payload,auth=(os.getenv('MAILJET_API_KEY'),os.getenv('MAILJET_API_SECRET')))
+                      if res.status_code in (200, 201):
+                             print("✅ Mailjet: Email sent:", res.status_code)
+                             return True
+                      else:
+                          print("❌ Mailjet response:", res.status_code, res.text)
+                          return False
+                  
+        except Exception as e:
+              print("Failed in sending email", e)
+
 
 class form_data_from_frontend(BaseModel):
         # unique_id: str
