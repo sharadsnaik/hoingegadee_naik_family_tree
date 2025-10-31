@@ -5,19 +5,15 @@ from pydantic import BaseModel
 from typing import List
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
-import uvicorn, httpx,ssl
-from email.mime.text import MIMEText
+import uvicorn, httpx
 from fastapi import HTTPException
-from bson import ObjectId
 
 
 load_dotenv()
 app = FastAPI()
 app.add_middleware(
      CORSMiddleware,
-    allow_origins=['http://localhost:3000',
-                   'https://hoingegadee-naik-family-tree-1.onrender.com',
-                   'http://192.168.1.39'],
+    allow_origins=['*'],
     allow_credentials=True,
     allow_methods=["*"],  # Include OPTIONS for preflight
     allow_headers=["*"],
@@ -62,7 +58,6 @@ async def send_email(subject: str, message:str):
 
 
 class form_data_from_frontend(BaseModel):
-        # unique_id: str
         image_url: str | None = None
         name: str
         father_name: str
@@ -71,6 +66,8 @@ class form_data_from_frontend(BaseModel):
         children: list =[str]
         Phone_number: str
         adress: str
+        gender: str
+        spouse_image: str | None = None
 
 # Saving to the data
 @app.post('/submit')
@@ -150,7 +147,9 @@ async def submit_form(data: form_data_from_frontend):
             "wife_name": data.wife_name,
             "children": children,
             "Phone_number": data.Phone_number,
-            "adress": data.adress
+            "adress": data.adress,
+            "gender": data.gender,
+            "spouse_image": data.spouse_image
         }
 
         # Logic for child added first → Later parent added → system should automatically link the child to the parent, and reuse same uniq_id
