@@ -9,8 +9,6 @@ import uvicorn, httpx,ssl
 from email.mime.text import MIMEText
 from fastapi import HTTPException
 from bson import ObjectId
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
 
 
 load_dotenv()
