@@ -5,25 +5,37 @@ from pydantic import BaseModel
 from typing import List
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
-import uvicorn, httpx
+import uvicorn, httpx,os, re
 from fastapi import HTTPException
+from contextlib import asynccontextmanager
+from Functions.matching_utilities import normalized_and_convert_to_kan,normalize_names, matching_names
 
 
 load_dotenv()
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Connect to MongoDB once on startup."""
+    global client, collection_name_mongodb
+    client = AsyncIOMotorClient(os.getenv("mongo_uri"), maxPoolSize=10)
+    db = client["Family_tree_DATABASE"]
+    collection_name_mongodb = db["Family_data_collection_V1"]
+    # Quick warmup query
+    await collection_name_mongodb.find_one({})
+    print("✅ MongoDB connected & warmed up")
+    try:
+          yield
+    finally:
+          client.close()
+          print('connection closed')
+
+app = FastAPI(lifespan=lifespan)
 app.add_middleware(
      CORSMiddleware,
-    allow_origins=['*'],
+    allow_origins=['*'],  #Phone ip],
     allow_credentials=True,
     allow_methods=["*"],  # Include OPTIONS for preflight
-    allow_headers=["*"],
-
-)
-import os
-client = AsyncIOMotorClient(os.getenv('mongo_uri'))
-db_name = client['Family_tree_DATABASE']
-collection_name_mongodb = db_name['Family_data_collection_V1']
-print(f"✅ Connected to MongoDB: {db_name}")
+    allow_headers=["*"])
 
 
 async def send_email(subject: str, message:str):
@@ -68,11 +80,15 @@ class form_data_from_frontend(BaseModel):
         adress: str
         gender: str
         spouse_image: str | None = None
+        partners_father_name: str
+        partners_mother_name: str
+        spouse_adress: str
+        spouse_siblings: list=[str]
 
 # Saving to the data
 @app.post('/submit')
 async def submit_form(data: form_data_from_frontend):
-        print('Debiugging children ', data.children)
+        print('Debiugging children ', data.spouse_siblings)
         # checking the user already exsits or not 
         existing_user = await collection_name_mongodb.find_one({
                 "name": data.name,
@@ -103,9 +119,18 @@ async def submit_form(data: form_data_from_frontend):
                 
                 existing_child = next((child for child in children_count if child['name'] == data.name), None)
 
+                # NEW: If no exact match, check fuzzy match using matching_names
+                if not existing_child:
+                      existing_child = next((child for child in children_count if matching_names(child['name'], data.name)), None)
+
                 if existing_child:
                         print('child exist under the parent so reusing the uniqe id')
                         unique_id_gen = existing_child['uniq_id']
+
+                        await collection_name_mongodb.update_one(
+                              {"_id": parent["_id"], "children.uniq_id": unique_id_gen},
+                              {"$set": {"children.$.name": data.name}}
+            )
                 else:
                         unique_id_gen = f'{father_name}_{mother_name}_{len(children_count) + 1}'
 
@@ -119,37 +144,53 @@ async def submit_form(data: form_data_from_frontend):
         if data.children and isinstance(data.children, list):
                 his_name = data.name[:3].lower()
                 his_wife_name =data.wife_name[:3].lower() if data.wife_name else "no-data"
-                
-                finding_child_count = await collection_name_mongodb.find_one({
-                        'name': data.name,
-                        'wife_name': data.wife_name
+
+                # NEW: Fetch all existing child documents with matching parents (to detect duplicates and get accurate count)
+                existing_children_cursor = collection_name_mongodb.find({
+                    'father_name': data.name,
+                    'mother_name': data.wife_name
                 })
-                curent_child_count = len(finding_child_count.get('children', []) if finding_child_count else [])
-
-                # children = []
-                if finding_child_count:
-                       existing_names = set(child['name'] for child in finding_child_count.get('children', []))
-                else : existing_names = set()
-                for idx, child_nam in enumerate(data.children, start=curent_child_count):
-                       if child_nam not in existing_names:
-                              child_uniq_id = f'{his_name}_{his_wife_name}_{idx}'
-                              children.append({"uniq_id": child_uniq_id, "name": child_nam})
-
+                existing_children_docs = await existing_children_cursor.to_list(length=None)
+                
+                # Use count of existing child docs for indexing new ones
+                current_child_count = len(existing_children_docs)
+                
+                # NEW: Build set of normalized names for quick lookup, but we'll use matching_names for fuzzy check
+                existing_normalized_names = {normalize_names(doc['name']) for doc in existing_children_docs}
+                
+                added_count = 0  # Track how many new we're adding for indexing
+                for child_nam in data.children:
+                    if not child_nam:
+                        continue
+                    
+                    # NEW: Check for existing match using matching_names
+                    match_found = any(matching_names(doc['name'], child_nam) for doc in existing_children_docs)
+                    
+                    if not match_found:
+                        # No match: Generate new uniq_id and add
+                        idx = current_child_count + added_count
+                        child_uniq_id = f'{his_name}_{his_wife_name}_{idx}'
+                        children.append({"uniq_id": child_uniq_id, "name": child_nam})
+                        added_count += 1
+                        
         # Build logic for first insertion of child later father
     
-
         document = {
             "uniq_id": unique_id_gen,
             "image_url": data.image_url,
             "name": data.name,
             "father_name": data.father_name,
-            "mother_name": data.mother_name,
+            "mother_name":data.mother_name,
             "wife_name": data.wife_name,
-            "children": children,
+            "children":children,
             "Phone_number": data.Phone_number,
             "adress": data.adress,
-            "gender": data.gender,
-            "spouse_image": data.spouse_image
+            "gender":data.gender,
+            "spouse_image": data.spouse_image,
+            "partners_father_name": data.partners_father_name,
+            "partners_mother_name": data.partners_mother_name,
+            "spouse_adress": data.spouse_adress,
+            "spouse_siblings": [data.spouse_siblings]
         }
 
         # Logic for child added first → Later parent added → system should automatically link the child to the parent, and reuse same uniq_id
@@ -158,30 +199,55 @@ async def submit_form(data: form_data_from_frontend):
 
         parent_id = result.inserted_id  # ✅ Now we have _id
         if data.wife_name:
-            first_added_children_cursor = collection_name_mongodb.find({
-                "father_name": data.name,
-                "mother_name": data.wife_name,
-                "uniq_id": {"$exists": True}
-            })
+            father_prefix = data.name[:3].lower()
+            mother_prefix = (data.wife_name or '')[:3].lower()
+            
+            all_related_child = collection_name_mongodb.find({
+        "father_name": {"$regex": f"^{father_prefix}", "$options": "i"},
+        "mother_name": {"$regex": f"^{mother_prefix}", "$options": "i"},
+        "uniq_id": {"$exists": True}
+    })
         
-            async for child in first_added_children_cursor:
+            async for child in all_related_child:
         
                 # adding child to parent's children if not already present
-                await collection_name_mongodb.update_one(
+                if matching_names(child.get('father_name'), data.name) and matching_names(child.get('mother_name'), data.wife_name):
+                      await collection_name_mongodb.update_one(
                     {"_id": parent_id},
                     {"$addToSet": {
                         "children": {"uniq_id": child["uniq_id"], "name": child["name"]}
                     }}
                 )
-        
-                # ✅ Ensure child's parent info updated
-                await collection_name_mongodb.update_one(
-                    {"_id": child["_id"]},
-                    {"$set": {
-                        "father_name": data.name,
-                        "mother_name": data.wife_name
-                    }}
-                )
+
+# Logic for handling if parent add manually childs (especially child is present and parent re-add )
+        if data.children:
+              checking_existing_child = collection_name_mongodb.find(
+                    {'father_name':data.name,
+                    'mother_name':data.wife_name}
+              )
+              existing_children_normalized_names = set()
+              async for c in checking_existing_child:
+                  existing_children_normalized_names.add(normalize_names(c.get('name', '')))
+              
+              for idx, child_entry in enumerate(data.children):
+                  child_name = child_entry.get("name") if isinstance(child_entry, dict) else str(child_entry)
+                  if not child_name:
+                      continue
+                  
+                  # FIXED: Add parent filters to query, use $regex for name flexibility (adjust as needed)
+                  existing_child_doc = await collection_name_mongodb.find_one({
+                      "name": {"$regex": re.escape(normalize_names(child_name)), "$options": "i"},
+                      "father_name": data.name,
+                      "mother_name": data.wife_name
+                  })
+                  if existing_child_doc:
+                      await collection_name_mongodb.update_one(
+                          {"_id": parent_id},
+                          {"$addToSet": {
+                              "children": {"uniq_id": existing_child_doc["uniq_id"], "name": existing_child_doc["name"]}
+                          }}
+                      )
+         
         # LOgic for counting the number of member are using the service
         total_members = await collection_name_mongodb.count_documents({})
         if total_members % 5 == 0:
@@ -199,9 +265,7 @@ async def submit_form(data: form_data_from_frontend):
                )
                await send_email(
                       subject="NEW MEMBERS ARE ADDED!!! 🎊🎊",
-                      message=message
-                #       message=f"🎉 Total {total_members} members now!\nLatest Member: {data.name}"
-               )
+                      message=message)
                print("📩 Email Notification Sent with last 5 member names!")
 
         return {"message": "Data saved successfully"}
@@ -228,23 +292,10 @@ async def delete_member(uniq_id: str):
 
     #  Remov from parent's children list
     name_to_delete = person.get('name')
-    father_name = person.get("father_name")
-    mother_name = person.get("mother_name")
 
     await collection_name_mongodb.update_many(
         {"children.name": name_to_delete},
         {"$pull": {"children": {"name": name_to_delete}}}
-    )
-
-    # ✅ Handle person's own children → unlink their parents
-    await collection_name_mongodb.update_many(
-        {"father_name": name_to_delete},
-        {"$set": {"father_name": "unknown"}}
-    )
-
-    await collection_name_mongodb.update_many(
-        {"mother_name": name_to_delete},
-        {"$set": {"mother_name": "unknown"}}
     )
 
     # ✅ Finally delete the person
@@ -262,6 +313,9 @@ async def delete_member(uniq_id: str):
 async def delete_all_data():
     result = await collection_name_mongodb.delete_many({})
     return {"message": f"Deleted {result.deleted_count} documents"}
+@app.get("/ping")
+async def ping():
+    return {"status": "alive"}
 
 
 if __name__ == '__main__':

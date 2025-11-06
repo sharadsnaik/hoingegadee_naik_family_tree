@@ -312,9 +312,12 @@
 
 /* Close Button */
 .close-btn {
-  position: absolute;
+  /* position: absolute;
   top: 1rem;
-  right: 1rem;
+  right: 1rem; */
+      position: fixed;
+    top: 4rem;
+    right: 2rem;
   background: #f3f4f6;
   border: none;
   border-radius: 50%;
@@ -593,6 +596,75 @@
     font-size: 0.75rem;
     padding: 0 0.5rem;
   }
+  .spouse-siblings {
+  margin-top: 1rem;
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.spouse-siblings label {
+  font-weight: 600;
+  margin-bottom: 6px;
+  display: block;
+}
+.child-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.spouse-details-container {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding: 20px;
+}
+
+.spouse-details-card {
+  background: #f9f9ff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 20px 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  width: 100%;
+}
+
+.section-title {
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  color: #333;
+  font-weight: 600;
+}
+
+.nentara_basic_details span {
+  display: block;
+  margin-bottom: 15px;
+}
+
+.nentara_basic_details label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #555;
+}
+
+.nentara_basic_details input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: border-color 0.3s ease;
+}
+
+.nentara_basic_details input:focus {
+  border-color: #6c63ff;
+  outline: none;
+}
+
+
 }
 
 @media (max-width: 480px) {
@@ -665,4 +737,47 @@
     font-size: 0.7rem;
     line-height: 1.4;
   }
+  .gender-toggle {
+  margin-top: 8px;
+}
+
+.gender-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 5px;
+  justify-content: center;
+}
+
+.gender-btn {
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.gender-btn.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.spouse-image-upload {
+  margin-top: 6px;
+        background: #f9fafb;
+        border-radius: 12px;
+        padding: 10px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    
+}
+
+.small-label {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 4px;
+  color: #555;
+}
+
 }

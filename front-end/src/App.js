@@ -1,6 +1,6 @@
 import Header from './components/header/header'
 import Main_tree from './components/central_tree_design/Central_main'
-import Tree from './components/content_tree/Tree'
+import Upload from './components/upload/upload_new'
 import './App.css';
 
 function App() {
@@ -8,7 +8,7 @@ function App() {
     <div className="App">
       <Header />
       <Main_tree />
-      <Tree />
+      <Upload />
     </div>
   );
 }
