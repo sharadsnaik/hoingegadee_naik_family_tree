@@ -23,6 +23,8 @@ const FamilyTree = () => {
 const [isRefreshing, setIsRefreshing] = useState(false);
 const [selectedSpouse, setSelectedSpouse] = useState(null);
 
+const [isKannada, setIsKannada] = useState(false);
+const [loadingMessage, setLoadingMessage] = useState("");
 
 useEffect(() => {
   // Initial fetch when component mounts
@@ -52,6 +54,7 @@ useEffect(() => {
   };
 }, []); // Empty dependency array = runs once on mount`
 
+
   useEffect(() => {
     if (familyData.length > 0 && containerRef.current && treeRef.current) {
       setTimeout(() => {
@@ -68,6 +71,31 @@ useEffect(() => {
     }
   }, [familyData, scale]);
 
+  // Useeffect for saving And laoding transalted data form system local 
+ useEffect(() => {
+  const savedLang = localStorage.getItem("languagePreference");
+  const isKn = savedLang === "kn";
+  const endpoint = isKn ? "/translate" : "/fetch";
+
+  (async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${main_url}${endpoint}`);
+      const data = await res.json();
+      setFamilyData(data);
+      setIsKannada(isKn);
+    } catch (err) {
+      console.error("Error loading data:", err);
+    } finally {
+      setLoading(false);
+    }
+  })();
+}, [isKannada]);  
+
+
+
+
+ 
   const fetchFamilyData = async (isAutoRefresh = false) => {
     try {
       if (isAutoRefresh){
@@ -383,7 +411,7 @@ const handleSpouseTouch = (spouseName, e) => {
     return (
       <div className="loading-container">
         <div className="spinner"></div>
-        <p>Loading family tree...</p>
+        <p>ಕಾಕಾ, ಅಜ್ಜ, ಅತ್ತೆ ಎಲ್ಲರ history ಹುಡುಕ್ತಾ ಇದ್ದೀವಿ.... 😵‍💫</p>
       </div>
     );
   }
@@ -401,11 +429,49 @@ const handleSpouseTouch = (spouseName, e) => {
 
   return (
     <div className="family-tree-app">
-      <header className="app-header">
-        <h1>Family Tree</h1>
-        <p>{familyData.length} family members · Drag to move · Pinch to zoom
-            {isRefreshing && <span className="refreshing-indicator"> • Refreshing...</span>}</p>
-      </header>
+     <header className="app-header">
+  <div className="header-left">
+    <h1>Family Tree</h1>
+    <p>
+      {familyData.length} family members · Drag to move · Pinch to zoom
+      {isRefreshing && <span className="refreshing-indicator"> • Refreshing...</span>}
+    </p>
+  </div>
+
+  <div className="header-right">
+    <button
+      onClick={async () => {
+        try {
+          // Determine the next language
+          const newLangIsKannada = !isKannada;
+          setIsKannada(newLangIsKannada);
+
+          // Save preference
+          localStorage.setItem("languagePreference", newLangIsKannada ? "kn" : "en");
+
+          // Choose backend endpoint
+          const endpoint = newLangIsKannada ? "/translate" : "/fetch";
+          setLoading(true);
+          setLoadingMessage(newLangIsKannada ? "Translating to Kannada..." : "Switching to English...");
+
+          // Fetch data
+          const res = await fetch(`${main_url}${endpoint}`);
+          const data = await res.json();
+          setFamilyData(data);
+        } catch (err) {
+          console.error("Language toggle failed:", err);
+        } finally {
+          setLoading(false);
+          setLoadingMessage("");
+        }
+      }}
+      className="lang-toggle-btn"
+    >
+      {isKannada ? "🌐 English" : "🌐 ಕನ್ನಡ"}
+    </button>
+  </div>
+</header>
+
 
       <div 
         className="tree-container"
@@ -414,6 +480,12 @@ const handleSpouseTouch = (spouseName, e) => {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
+        {loading && loadingMessage && (
+  <div className="loading-overlay">
+    <div className="spinner"></div>
+    <p>{loadingMessage}</p>
+  </div>
+)}
         <div 
           className="tree-wrapper"
           ref={treeRef}

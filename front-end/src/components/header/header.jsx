@@ -1,5 +1,7 @@
 import React from 'react';
 import './header.css';
+import Kananda from '../translate/kannada_translate'
+
 
 const Header = () => {
   return (

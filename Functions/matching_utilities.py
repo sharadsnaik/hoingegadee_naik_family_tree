@@ -12,24 +12,26 @@ def normalized_and_convert_to_kan(name:str) -> str:
 
 ###################### For tarnslation #####################
        
-        # translated = GoogleTranslator(source='auto', target='en').translate(name
+        translated = GoogleTranslator(source='auto', target='kn').translate(name)
 
 
 ############# # Attempt transliteration from Kannada to Latin ######################
         # If text is not Kannada, this will just return the same text
 
-        transliterated = transliterate(name, sanscript.KANNADA, sanscript.ITRANS)
+        # transliterated = transliterate(name, sanscript.KANNADA, sanscript.ITRANS)
 
-        # print('translated Text =>', translated)
-        clean_name = re.sub(r'[^a-zA-Z\s]', '', transliterated).lower().strip()
-        
-        clean_name = " ".join(clean_name.split()).lower().strip()
+        # # print('translated Text =>', translated)
+        # clean_name = re.sub(r'[^a-zA-Z\s]', '', transliterated).lower().strip()
+        # clean_name = " ".join(clean_name.split()).lower().strip()
 
-        print(clean_name)
-        return clean_name
+        # print(clean_name)
+        return translated
+        # return " ".join(translated.split())
+
     
     except Exception as e:
-        return " ".join(name.split()).lower().strip()
+        return name
+        # return " ".join(name.split()).lower().strip()
     
 # name = input('Name => ')
 # normalized_and_save(name)
@@ -55,3 +57,4 @@ def matching_names(name_1:str, name_2:str) -> bool:
 # names =['sharad', 'Shinnu', "Govinda",'ಗೋವಿಂದ', 'ಕೃಷ್ಣ', 'ಮಾಸ್ತಿ']
 # for i in names:
 #     normalized_and_convert_to_kan(i)
+
