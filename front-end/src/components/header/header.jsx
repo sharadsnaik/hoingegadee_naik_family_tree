@@ -1,7 +1,7 @@
 import React from 'react';
 import './header.css';
 import Kananda from '../translate/kannada_translate'
-
+import '../../App.css'
 
 const Header = () => {
   return (
@@ -17,17 +17,29 @@ const Header = () => {
           </h3>
           <div className="legend-grid">
             <div className="legend-item">
-              <span className="legend-line parent-child-line" aria-hidden="true"></span>
-              <span>Parent to Children</span>
+              <div className='marriage-line'>
+                <div className='marriage-heart'>💖</div>
+
+              </div>
+              <div>ಪತಿ - ಪತ್ನಿ </div>
             </div>
             <div className="legend-item">
+              <div class="vertical-line-header"></div>
+
+              <span>ಅಪ್ಪ ಅಮ್ಮ ➡️ ಮಕ್ಕಳು </span>
+            </div> 
+            {/* <div className="legend-item">
+              <span className="legend-line parent-child-line" aria-hidden="true"></span>
+              <span>Parent to Children</span>
+            </div> */}
+            {/* <div className="legend-item">
               <span className="legend-line sibling-line" aria-hidden="true"></span>
               <span>Siblings Connection</span>
             </div>
             <div className="legend-item">
               <span className="legend-line grandchild-line" aria-hidden="true"></span>
               <span>Children to Grandchildren</span>
-            </div>
+            </div> */}
           </div>
         </section>
       </div>

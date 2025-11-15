@@ -237,11 +237,11 @@
   position: fixed;
   bottom: 2rem;
   right: 2rem;
-  width: 4rem;
+  width: 35vw ;
   height: 4rem;
   background: linear-gradient(135deg, #3b82f6, #2563eb);
   border: none;
-  border-radius: 50%;
+  border-radius: 10%;
   color: white;
   cursor: pointer;
   box-shadow: 0 8px 16px rgba(59, 130, 246, 0.4);

@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User, Phone, MapPin, X, Trash2 } from 'lucide-react';
 import './FamilyTree.css';
+import '../../App.css'
 
 const FamilyTree = () => {
-    // const main_url ='https://hoingegadee-naik-family-tree-1.onrender.com'
-  const main_url = 'http://127.0.0.1:8000'
+  const main_url = process.env.REACT_APP_BACKEND_URL;
+
+  // const main_url = 'http://127.0.0.1:8000'
   const [familyData, setFamilyData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -91,11 +93,6 @@ useEffect(() => {
     }
   })();
 }, [isKannada]);  
-
-
-
-
- 
   const fetchFamilyData = async (isAutoRefresh = false) => {
     try {
       if (isAutoRefresh){
@@ -311,6 +308,7 @@ const handleSpouseTouch = (spouseName, e) => {
       // Find spouse data from API (or construct from person data)
       const spouseData = {
         name: person.wife_name,
+        spouse_image: person.spouse_image || '',
         partners_father_name: person.partners_father_name || '',
         partners_mother_name: person.partners_mother_name || '',
         spouse_adress: person.spouse_adress || '',
@@ -344,7 +342,7 @@ const handleSpouseTouch = (spouseName, e) => {
 
             {hasSpouse && (
               <>
-                <div className="marriage-line">
+                <div className="marriage-line marriage-line-header-extra">
                   <div className="marriage-heart">♥</div>
                 </div>
 
@@ -411,7 +409,7 @@ const handleSpouseTouch = (spouseName, e) => {
     return (
       <div className="loading-container">
         <div className="spinner"></div>
-        <p>ಕಾಕಾ, ಅಜ್ಜ, ಅತ್ತೆ ಎಲ್ಲರ history ಹುಡುಕ್ತಾ ಇದ್ದೀವಿ.... 😵‍💫</p>
+        <p className='cont-mes'>ಕಾಕಾ, ಅಜ್ಜ, ಅತ್ತೆ ಎಲ್ಲರ history ಹುಡುಕ್ತಾ ಇದ್ದೀವಿ.... 😵‍💫</p>
       </div>
     );
   }
@@ -643,10 +641,26 @@ const handleSpouseTouch = (spouseName, e) => {
         <X size={24} />
       </button>
       
-      <div className="modal-header spouse-header">
+      {selectedSpouse.spouse_image ? (
+      <div className={`modal-header spouse-header ${
+    selectedSpouse.spouse_image ? "" : "no-spouse-image"
+  }`}
+      style={ selectedSpouse.spouse_image ?  {
+            backgroundImage: `url(${selectedSpouse.spouse_image})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            color: 'white',
+            padding: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem',
+            borderRadius: '8px 8px 0 0',
+          } : {}}
+      >
         <div className="modal-avatar spouse-avatar-large">
-          {selectedSpouse.image_uri ? (
-            <img src={selectedSpouse.image_uri} alt={selectedSpouse.name} />
+          {selectedSpouse.spouse_image ? (
+            <img src={selectedSpouse.spouse_image} alt={selectedSpouse.name} />
           ) : (
             <User size={48} />
           )}
@@ -656,6 +670,17 @@ const handleSpouseTouch = (spouseName, e) => {
           <p className="modal-subtitle">Spouse</p>
         </div>
       </div>
+
+        ):(
+          <div className="modal-header fallback">
+                  <div className="modal-avatar">
+                    <User size={48} />
+                  </div>
+                  <div>
+                    <h2>{selectedSpouse.name}</h2>
+                  </div>
+                </div>
+        )}
 
       <div className="modal-body">
         <div className="info-section">
@@ -704,23 +729,6 @@ const handleSpouseTouch = (spouseName, e) => {
     </div>
   </div>
 )}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     </div>
   );
 };

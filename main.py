@@ -277,6 +277,7 @@ async def fetch_data():
                 data = await data.to_list()
                 for doc in data:
                         doc['_id'] = str(doc['_id']) # Convert ObjectId to string
+                        
                 return JSONResponse(content=data)
         except Exception as e:
                 return JSONResponse(status_code=500, content={"error": str(e)})
@@ -331,7 +332,7 @@ async def translate_data():
             
             translated_docs.append(translated_data)
 
-        # await asyncio.sleep(6234342423130)
+        await asyncio.sleep(9999999999999999999999999999996234342423130)
         return JSONResponse(content=translated_docs)
 
     except Exception as e:
@@ -376,4 +377,4 @@ async def ping():
 
 
 if __name__ == '__main__':
-        uvicorn.run('main:app', host='0.0.0.0', port=8000, reload=True)        
+        uvicorn.run('main:app', host='127.0.0.1', port=8000, reload=True)        

@@ -64,19 +64,22 @@
     "uniq_id": "dc_ddf_2",
     "image_url": "",
     "name": "rama",
-    "father_name": "dc",
-    "mother_name": "ddf",
+    "father_name": "darma",
+    "mother_name": "shruti",
     "wife_name": "rajeshwari",
-    "children": [],
+    "children": [{
+        "uniq_id": "dc_ddf_2",
+        "name": "rama"
+      }],
     "Phone_number": "",
-    "adress": "",
+    "adress": "Bengaluru",
     "gender": "male",
     "spouse_image": "",
-    "partners_father_name": "wc",
-    "partners_mother_name": "wc",
-    "spouse_adress": "wefc",
-    "spouse_siblings": [
-      []
-    ]
+    "partners_father_name": "rajesh",
+    "partners_mother_name": "gowri",
+    "spouse_adress": "bengaluru",
+    "spouse_siblings": 
+      ['Ravi','akhil']
+    
   }
 ]

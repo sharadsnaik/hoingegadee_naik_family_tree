@@ -3,8 +3,9 @@ import { Users, Plus, X, PlusCircle } from 'lucide-react';
 import './Tree.css';
 
 const FamilyTree = () => {
-  // const main_url ='https://hoingegadee-naik-family-tree-1.onrender.com'
-  const main_url = 'http://127.0.0.1:8000'
+  const main_url = process.env.REACT_APP_BACKEND_URL;
+
+  // const main_url = 'http://127.0.0.1:8000'
   const [showPopup, setShowPopup] = useState(false);
   const [isSelectingSuggestion, setisSelectingSuggesion] = useState(false);
   const [familyData, setFamilyData] = useState([]);
@@ -328,9 +329,9 @@ const getSuggestions = (field, value) => {
       <button 
         className="add-member-btn"
         onClick={() => setShowPopup(true)}
-        aria-label="Add Family Member"
-      >
-        <Plus size={28} />
+        aria-label="Add Family Member">
+      ನೀವ್ ಇದ್ದೀರಾ ✅
+      ಇಲ್ಲ ಅಂದ್ರೆ ಸೇರಿಸಿ 👨‍👩‍👧‍👦       
       </button>
 
       {showPopup && (

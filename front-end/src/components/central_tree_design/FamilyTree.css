@@ -180,43 +180,6 @@ html, body {
   font-weight: 600;
 }
 
-.marriage-line {
-  width: 80px;
-  height: 2px;
-  background: linear-gradient(90deg, #667eea, #f5576c);
-  position: relative;
-  top: -50px;
-  animation: flowRight 3s linear infinite;
-  background-size: 200% 100%;
-  pointer-events: none;
-}
-
-@keyframes flowRight {
-  0% {
-    background-position: 0% 0%;
-  }
-  100% {
-    background-position: 200% 0%;
-  }
-}
-
-.marriage-heart {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: #e91e63;
-  font-size: 1.2rem;
-  background: white;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 12px rgba(233, 30, 99, 0.4);
-  animation: heartbeat 1.5s ease-in-out infinite;
-}
 
 @keyframes heartbeat {
   0%, 100% {
@@ -340,12 +303,15 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+justify-content: space-evenly;  
   width: 100vw;
   height: 100vh;
 font-weight: 400;  gap: 20px;
 }
-
+.cont-mes{
+  bottom: 25%;
+  position: relative;
+}
 .spinner {
   width: 60px;
   height: 60px;
@@ -688,6 +654,9 @@ font-weight: 400;  gap: 20px;
   .marriage-line {
     width: 60px;
   }
+  .marriage-line-header-extra{
+  top: -50px;
+  }
 
   .marriage-heart {
     width: 24px;
@@ -724,8 +693,11 @@ font-weight: 400;  gap: 20px;
   border: 3px solid #f093fb;
 }
 
-.spouse-header {
-  background: linear-gradient(135deg, #f093fb, #f5576c) !important;
+
+@media (max-width: 768px) {
+  .spouse-header.no-spouse-image {
+      background: linear-gradient(135deg, #f093fb, #f5576c) !important;
+  }
 }
 
 .spouse-avatar-large {
