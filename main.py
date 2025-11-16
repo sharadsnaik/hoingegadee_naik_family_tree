@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(
      CORSMiddleware,
-    allow_origins=['https://naikru.netlify.app', 'https://hoingegadee-naik-family-tree-1.onrender.com'],  #Phone ip],
+    allow_origins=['*'],  #Phone ip],
     allow_credentials=True,
     allow_methods=["*"],  # Include OPTIONS for preflight
     allow_headers=["*"])
@@ -338,7 +338,30 @@ async def translate_data():
     except Exception as e:
         print("❌ Error during translation:", e)
         return JSONResponse(status_code=500, content={"error": str(e)})
-        
+
+class ImageUpdateModel(BaseModel):
+    image_url: str
+
+@app.patch("/edit/image/{uniq_id}")
+async def update_image(uniq_id: str, data: ImageUpdateModel):
+
+    # Find the person
+    person = await collection_name_mongodb.find_one({"uniq_id": uniq_id})
+    if not person:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Update only the image_url field
+    update_result = await collection_name_mongodb.update_one(
+        {"uniq_id": uniq_id},
+        {"$set": {"image_url": data.image_url}}
+    )
+
+    if update_result.modified_count == 0:
+        raise HTTPException(status_code=500, detail="Update failed")
+
+    return {"message": "Image updated successfully", "uniq_id": uniq_id}
+
+
 
 @app.delete("/delete/uniq{uniq_id}")
 async def delete_member(uniq_id: str):
