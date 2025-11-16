@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(
      CORSMiddleware,
-    allow_origins=['https://naikru.netlify.app/', 'https://hoingegadee-naik-family-tree-1.onrender.com'],  #Phone ip],
+    allow_origins=['https://naikru.netlify.app', 'https://hoingegadee-naik-family-tree-1.onrender.com'],  #Phone ip],
     allow_credentials=True,
     allow_methods=["*"],  # Include OPTIONS for preflight
     allow_headers=["*"])
