@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(
      CORSMiddleware,
-    allow_origins=['*'],  #Phone ip],
+    allow_origins=['https://naikru.netlify.app/', 'https://hoingegadee-naik-family-tree-1.onrender.com'],  #Phone ip],
     allow_credentials=True,
     allow_methods=["*"],  # Include OPTIONS for preflight
     allow_headers=["*"])
@@ -377,4 +377,4 @@ async def ping():
 
 
 if __name__ == '__main__':
-        uvicorn.run('main:app', host='127.0.0.1', port=8000, reload=True)        
+        uvicorn.run('main:app', host='0.0.0.0', port=8000, reload=True)        
