@@ -5,10 +5,13 @@ from pydantic import BaseModel
 from typing import List
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
-import uvicorn, httpx,os, re
+import uvicorn,os, re, random
 from fastapi import HTTPException
 from contextlib import asynccontextmanager
-from Functions.matching_utilities import normalized_and_convert_to_kan,normalize_names, matching_names
+from Functions.matching_utilities import normalize_names, matching_names
+from Functions.mail import send_email_
+from Functions.logics import Once_translating_doc
+
 
 
 load_dotenv()
@@ -16,10 +19,12 @@ load_dotenv()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Connect to MongoDB once on startup."""
-    global client, collection_name_mongodb
+    global client, collection_name_mongodb, collection_name_mongodb_KAN
+
     client = AsyncIOMotorClient(os.getenv("mongo_uri"), maxPoolSize=10)
     db = client["Family_tree_DATABASE"]
     collection_name_mongodb = db["Family_data_collection_V1"]
+    collection_name_mongodb_KAN = db["Family_data_collection_V1_KAN"]
     # Quick warmup query
     await collection_name_mongodb.find_one({})
     print("✅ MongoDB connected & warmed up")
@@ -32,41 +37,12 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(
      CORSMiddleware,
-    allow_origins=['*'],  #Phone ip],
+    allow_origins=['https://naikru.netlify.app', 'https://hoingegadee-naik-family-tree-1.onrender.com'],  #Phone ip],
     allow_credentials=True,
     allow_methods=["*"],  # Include OPTIONS for preflight
     allow_headers=["*"])
 
 
-async def send_email(subject: str, message:str):
-        email_From = os.getenv("EMAIL_USER")
-        email_To = os.getenv("EMAIL_USER")
-
-        url = 'https://api.mailjet.com/v3.1/send'
-        payload = {
-        "Messages": [
-            {
-                "From": {"Email": email_From, "Name": "Family App"},
-                "To": [{"Email": email_To, "Name": "Admin"}],
-                "Subject": subject,
-                "TextPart": message,
-                # "HTMLPart": "<h3>HTML message</h3>",   # optional
-            }
-        ]
-    }
-
-        try:
-               async with httpx.AsyncClient(timeout= 10.0) as client:
-                      res = await client.post(url, json= payload,auth=(os.getenv('MAILJET_API_KEY'),os.getenv('MAILJET_API_SECRET')))
-                      if res.status_code in (200, 201):
-                             print("✅ Mailjet: Email sent:", res.status_code)
-                             return True
-                      else:
-                          print("❌ Mailjet response:", res.status_code, res.text)
-                          return False
-                  
-        except Exception as e:
-              print("Failed in sending email", e)
 
 
 class form_data_from_frontend(BaseModel):
@@ -111,8 +87,9 @@ async def submit_form(data: form_data_from_frontend):
         father_name = data.father_name[:3].lower() if data.father_name else "no-data"
         mother_name = data.mother_name[:3].lower() if data.mother_name else "no-data"
         
-        if not parent:      # unique id if Generating parent         
-                unique_id_gen= f'{father_name}_{mother_name}'
+        if not parent:      # unique id if Generating parent   
+                num_ = random.randrange(0, 100)      
+                unique_id_gen= f'{father_name}_{mother_name}_{num_}'
                 print('Generated unique id', unique_id_gen)
         else:
                 children_count = parent.get('children', [])
@@ -263,10 +240,24 @@ async def submit_form(data: form_data_from_frontend):
                    f"Total Members Now: {total_members}\n\n"
                    f"Latest 5 Members:\n{names_list_str}"
                )
-               await send_email(
+               await send_email_(
+                    email_from =os.getenv("EMAIL_USER"),
+                    email_to = os.getenv("EMAIL_USER"),
                       subject="NEW MEMBERS ARE ADDED!!! 🎊🎊",
-                      message=message)
+                      message=message,
+                      mail_jet_api_key = os.getenv("MAILJET_API_KEY"),
+                      mail_jet_secret = os.getenv('MAILJET_API_SECRET')
+                      )
                print("📩 Email Notification Sent with last 5 member names!")
+
+        # Handling the kanndaa tarnslation to collection_name_mongodb_KAN
+
+        translated_doc = Once_translating_doc(document)
+        await collection_name_mongodb_KAN.update_one(
+            {"uniq_id": translated_doc["uniq_id"]},
+            {"$set": translated_doc},
+            upsert=True
+        )
 
         return {"message": "Data saved successfully"}
 
@@ -281,79 +272,56 @@ async def fetch_data():
                 return JSONResponse(content=data)
         except Exception as e:
                 return JSONResponse(status_code=500, content={"error": str(e)})
+
+
 # Optional delete all the itmes in collection 
 import asyncio
+
+
 @app.get('/translate', response_model=List[dict])
+# async def translate_data():
+    # return await translate_to_kannnda(collection_name_mongodb)
+
 async def translate_data():
     try:
-        # cached = await collection_name_mongodb.find_one({"_cached_kan_data":{"$exists":True}})
-        # if cached:
-        #       print('Usinfg cacjed documents')
-        #       data_cursor = collection_name_mongodb.find({}, {"_cached_kan_data": 1})
-        #       data = await data_cursor.to_list(length=None)
-        #       return JSONResponse(content=[doc["_cached_kn"] for doc in data])
-
-        data_cursor = collection_name_mongodb.find()
+        data_cursor = collection_name_mongodb_KAN.find()
         data = await data_cursor.to_list(length=None)
 
-        translated_docs = []
-
+        # Convert ObjectId to string for frontend safety
         for doc in data:
-            translated_data = {
-                # "_id": str(doc.get("_id")),
-                "uniq_id": doc.get("uniq_id"),
-                "image_url": doc.get("image_url", ""),
-                "name": normalized_and_convert_to_kan(doc.get("name", "")),
-                "father_name": normalized_and_convert_to_kan(doc.get("father_name", "")),
-                "mother_name": normalized_and_convert_to_kan(doc.get("mother_name", "")),
-                "wife_name": normalized_and_convert_to_kan(doc.get("wife_name", "")),
-                "Phone_number": doc.get("Phone_number", ""),
-                "adress": normalized_and_convert_to_kan(doc.get("adress", "")),
-                "gender": normalized_and_convert_to_kan(doc.get("gender", "")),
-                "spouse_image": doc.get("spouse_image", ""),
-                "partners_father_name": normalized_and_convert_to_kan(doc.get("partners_father_name", "")),
-                "partners_mother_name": normalized_and_convert_to_kan(doc.get("partners_mother_name", "")),
-                "spouse_adress": normalized_and_convert_to_kan(doc.get("spouse_adress", "")),
-                "spouse_siblings": [
-                    normalized_and_convert_to_kan(sib)
-                    for sib in doc.get("spouse_siblings", [])
-                ],
-                "children": [
-                    {
-                        "uniq_id": child.get("uniq_id", ""),
-                        "name": normalized_and_convert_to_kan(child.get("name", ""))
-                    }
-                    for child in doc.get("children", [])
-                ],
-            }
-            
-            # await collection_name_mongodb.update_one(
-                # {"_id": doc["_id"]}, {"$set": {"_cached_kn": translated_data}}
-            
-            translated_docs.append(translated_data)
+            if "_id" in doc:
+                doc["_id"] = str(doc["_id"])
 
-        await asyncio.sleep(9999999999999999999999999999996234342423130)
-        return JSONResponse(content=translated_docs)
-
+        return JSONResponse(content=data)
     except Exception as e:
-        print("❌ Error during translation:", e)
+        print("❌ Error during translate fetch:", e)
         return JSONResponse(status_code=500, content={"error": str(e)})
 
 class ImageUpdateModel(BaseModel):
     image_url: str
+    gender: str | None = None
 
 @app.patch("/edit/image/{uniq_id}")
 async def update_image(uniq_id: str, data: ImageUpdateModel):
 
     # Find the person
     person = await collection_name_mongodb.find_one({"uniq_id": uniq_id})
+   
     if not person:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    if data.gender.lower() == "male":
+        update_field = "image_url"
+    elif data.gender.lower() == "female":
+        update_field = "spouse_image"
+    else:
+        raise HTTPException(status_code=400, detail="Invalid gender — must be male or female")
+
 
     # Update only the image_url field
     update_result = await collection_name_mongodb.update_one(
         {"uniq_id": uniq_id},
-        {"$set": {"image_url": data.image_url}}
+        {"$set": {update_field: data.image_url}}
     )
 
     if update_result.modified_count == 0:
@@ -388,16 +356,36 @@ async def delete_member(uniq_id: str):
 
     return {"message": f"✅ Member '{name_to_delete}' deleted successfully"}
 
-    
+
+# handling child deletion in parent list 
+@app.delete("/delete/child/{parent_id}/{child_id}")
+async def delete_child(parent_id: str, child_id: str):
+    # Check parent exists
+    parent = await collection_name_mongodb.find_one({"uniq_id": parent_id})
+    if not parent:
+        raise HTTPException(status_code=404, detail="Parent not found")
+
+    # Remove child entry from parent's children array
+    result = await collection_name_mongodb.update_one(
+        {"uniq_id": parent_id},
+        {"$pull": {"children": {"uniq_id": child_id}}}
+    )
+
+    if result.modified_count == 0:
+        raise HTTPException(status_code=400, detail="Child not found or not removed")
+
+    return {"message": "Child removed from parent successfully"}
+ 
 
 @app.delete("/delete-all")
 async def delete_all_data():
     result = await collection_name_mongodb.delete_many({})
     return {"message": f"Deleted {result.deleted_count} documents"}
+
 @app.get("/ping")
 async def ping():
     return {"status": "alive"}
 
 
 if __name__ == '__main__':
-        uvicorn.run('main:app', host='0.0.0.0', port=8000, reload=True)        
+        uvicorn.run('main:app', host='127.0.0.1', port=8000, reload=True)        
