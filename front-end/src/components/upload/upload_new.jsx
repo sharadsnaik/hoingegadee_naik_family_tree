@@ -41,6 +41,21 @@ const FamilyTree = () => {
     fetchFamilyData();
   }, []);
 
+// use efect for hnadlign app for exiting
+
+  useEffect(() => {
+  const handleBack = (event) => {
+    if (showPopup) {
+      setShowPopup(false);
+      return;
+    }
+  };
+
+  window.addEventListener("popstate", handleBack);
+  return () => window.removeEventListener("popstate", handleBack);
+}, [showPopup]);
+
+
   const fetchFamilyData = async () => {
     try {
       // const response = await fetch();
@@ -54,20 +69,32 @@ const FamilyTree = () => {
     }
   };
 
+// const [preview, setPreview] = useState(null);
+
   // Handle image upload
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({
-          ...prev,
-          image_url: reader.result
-        }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+const handleImageChange = (e) => {
+  const file = e.target.files[0];
+  
+  if (file) {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData((prev) => ({
+        ...prev,
+        image_url: reader.result,   // base64 string for preview or upload
+        image_file: file            // keep original file if needed for backend
+      }));
+    };
+    reader.readAsDataURL(file);
+  } else {
+    // If user clears the file input
+    setFormData((prev) => ({
+      ...prev,
+      image_url: null,
+      image_file: null
+    }));
+  }
+};
+
 
   // Get suggestions for father/mother names
 // Get suggestions for father/mother names
@@ -186,6 +213,7 @@ const getSuggestions = (field, value) => {
     spouse_adress: formData.spouse_adress,
     spouse_siblings: formData.spouse_siblings.filter(s => s.trim() !== '')
   };
+  
 
   try {
     const response = await fetch(`${main_url}/submit`, {
@@ -251,87 +279,26 @@ const getSuggestions = (field, value) => {
     });
     setSubmitStatus('');
     setSuggestions({ father: [], mother: [] });
+      window.history.back(); // remove the pseudo-page
+
   };
 
-  const FamilyMember = ({ member, level = 0 }) => {
-    const hasChildren = member.children && member.children.length > 0;
-    const hasSpouse = member.spouse;
 
-    // return (
-    //   <div className="family-member-container">
-    //     <div className="member-wrapper">
-    //       <div className="couple-container">
-    //         <div className="member-card">
-    //           <div className={`member-circle ${member.color}`}>
-    //             {member.image_url ? (
-    //               <img 
-    //                 src={member.image_url} 
-    //                 alt={member.name} 
-    //                 style={{
-    //                   width: '100%', 
-    //                   height: '100%', 
-    //                   borderRadius: '50%', 
-    //                   objectFit: 'cover'
-    //                 }} 
-    //               />
-    //             ) : (
-    //               <Users size={32} />
-    //             )}
-    //           </div>
-    //           <div className="member-name">{member.name}</div>
-    //         </div>
-
-    //         {hasSpouse && (
-    //           <>
-    //             <div className="spouse-connector"></div>
-    //             <div className="member-card">
-    //               <div className={`member-circle ${member.color}`}>
-    //                 <Users size={32} />
-    //               </div>
-    //               <div className="member-name">{member.spouse}</div>
-    //             </div>
-    //           </>
-    //         )}
-    //       </div>
-
-    //       {hasChildren && (
-    //         <div className={`vertical-line level-${level}`}></div>
-    //       )}
-    //     </div>
-
-    //     {hasChildren && (
-    //       <div className="children-section">
-    //         {member.children.length > 1 && (
-    //           <div 
-    //             className="sibling-connector"
-    //             style={{
-    //               width: `${(member.children.length - 1) * 180}px`
-    //             }}
-    //           ></div>
-    //         )}
-            
-    //         <div className="children-grid">
-    //           {member.children.map((child) => (
-    //             <div key={child.id} className="child-wrapper">
-    //               <div className="child-connector-line"></div>
-    //               <FamilyMember member={child} level={level + 1} />
-    //             </div>
-    //           ))}
-    //         </div>
-    //       </div>
-    //     )}
-    //   </div>
-    // );
-  };
+  
 
   return (
     <div className="app-container">
       <button 
         className="add-member-btn"
-        onClick={() => setShowPopup(true)}
+        onClick={() => {
+  setShowPopup(true);
+  window.history.pushState({ uploadPopup: true }, "");
+}}
+       
         aria-label="Add Family Member">
-      ನೀವ್ ಇದ್ದೀರಾ ✅
-      ಇಲ್ಲ ಅಂದ್ರೆ ಸೇರಿಸಿ 👨‍👩‍👧‍👦       
+      <span>ನೀವ್ ಇದ್ದೀರಾ ⁉️</span>
+      <span>ಇಲ್ಲ ಅಂದ್ರೆ ಸೇರಿಸಿ 👨‍👩‍👧‍👦 </span>
+            
       </button>
 
       {showPopup && (
@@ -341,19 +308,30 @@ const getSuggestions = (field, value) => {
               <X size={24} />
             </button>
             
-            <h2 className="popup-title">Add Family Member</h2>
+            <h2 className="popup-title">Enter ಎಲ್ಲಾ ಜಾತಕ 📄🕵️ </h2>
             
             <div className="member-form">
               <div className="form-group">
                 <label htmlFor="image">Profile Image</label>
-                <input
-                  type="file"
-                  id="image"
-                  name="image"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                />
-              </div>
+        <input
+        type="file"
+        id="image"
+        name="image"
+        accept="image/*"
+        onChange={handleImageChange}
+      />
+
+      {/* Show preview if available */}
+        {formData.image_url && (
+    <div style={{ marginTop: "10px" }}>
+      <img
+        src={formData.image_url}
+        alt="Profile Preview"
+        style={{ width: "150px", height: "150px", objectFit: "cover", borderRadius: "8px" }}
+      />
+    </div>
+  )}
+   </div>
 
               <div className="form-group">
                 <label htmlFor="name">Name *</label>
@@ -484,6 +462,16 @@ const getSuggestions = (field, value) => {
       }}
       style={{width:"90%"}}
     />
+    {formData.spouse_image && (
+    <div style={{ marginTop: "10px" }}>
+      <img
+        src={formData.spouse_image}
+        alt="Profile Preview"
+        style={{ width: "150px", height: "150px", objectFit: "cover", borderRadius: "8px" }}
+      />
+    </div>
+  )}
+
 
     <div className="spouse-details">
       <div className="spouse-details-container">
@@ -650,7 +638,7 @@ const getSuggestions = (field, value) => {
               )}
 
               <button type="button" className="submit-btn" onClick={handleSubmit}>
-                Add Member
+                Submit ✅✅
               </button>
             </div>
           </div>

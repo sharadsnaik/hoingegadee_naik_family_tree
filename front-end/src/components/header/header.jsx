@@ -1,6 +1,6 @@
 import React from 'react';
 import './header.css';
-import Kananda from '../translate/kannada_translate'
+// import Kananda from '../translate/kannada_translate'
 import '../../App.css'
 
 const Header = () => {

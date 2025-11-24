@@ -260,6 +260,70 @@ useEffect(() => {
     }
   };
 
+const handleImageEdit = async (e, uniq_id, gender) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onloadend = async () => {
+    const base64 = reader.result;
+
+    const res = await fetch(`${main_url}/edit/image/${uniq_id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        image_url: base64,
+        gender: gender        // <-- IMPORTANT
+      })
+    });
+
+    const data = await res.json();
+    console.log("Updated:", data);
+
+    fetchFamilyData(true);
+    if (gender === "male") {
+      setSelectedPerson(null);
+    } else {
+      setSelectedSpouse(null);
+    }
+  };
+
+  reader.readAsDataURL(file);
+};
+
+const handleDeleteChild = async (parentId, childId) => {
+  if (!window.confirm("Remove this child from parent?")) return;
+
+  try {
+    const res = await fetch(`${main_url}/delete/child/${parentId}/${childId}`, {
+      method: "DELETE",
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.detail || "Failed to delete child");
+      return;
+    }
+
+    alert("Child removed!");
+
+    // Refresh family data
+    await fetchFamilyData(true);
+
+    // Update modal instantly
+    setSelectedPerson(null);
+    const refreshedParent = findPersonByUniqId(parentId);
+    setSelectedPerson(refreshedParent);
+
+
+  } catch (error) {
+    alert("Error deleting child");
+    console.error(error);
+  }
+};
+
   const PersonNode = ({ person, generation = 0 }) => {
     const children = getChildren(person);
     const hasSpouse = person.wife_name && person.wife_name.trim() !== '';
@@ -313,6 +377,8 @@ const handleSpouseTouch = (spouseName, e) => {
         partners_mother_name: person.partners_mother_name || '',
         spouse_adress: person.spouse_adress || '',
         spouse_siblings: person.spouse_siblings || [],
+          parent_uniq_id: person.uniq_id    // <-- FIX
+
         // You might need to fetch additional spouse data from API
       };
       
@@ -320,7 +386,9 @@ const handleSpouseTouch = (spouseName, e) => {
     }
   }
   setPersonTouchStart(null);
-};
+ };
+ 
+
     return (
       <div className="tree-node">
         <div className="couple-container">
@@ -511,7 +579,7 @@ const handleSpouseTouch = (spouseName, e) => {
               // console.log('Close button clicked');
               setSelectedPerson(null);
             }}>
-              <X size={24} />
+              <X size={28} />
             </button>
             
           {selectedPerson.image_url ? (
@@ -543,17 +611,32 @@ const handleSpouseTouch = (spouseName, e) => {
           </div>
           )  : (
                 <div className="modal-header fallback">
-                  <div className="modal-avatar">
-                    <User size={48} />
-                  </div>
-                  <div>
-                    <h2>{selectedPerson.name}</h2>
-                  </div>
-                </div>
+  <div className="modal-avatar">
+    <User size={48} />
+  </div>
+
+  <div className="fallback-right">
+    <h2>{selectedPerson.name}</h2>
+
+    {/* Add Image Button */}
+    <button 
+      className="add-image-btn" 
+      onClick={() => document.getElementById("PersonImageUpload").click()}>
+      ➕ Add Image
+    </button>
+
+    {/* Hidden file input */}
+    <input 
+      type="file" 
+      id="PersonImageUpload" 
+      style={{ display: "none" }}
+      accept="image/*"
+      onChange={(e) => handleImageEdit(e, selectedPerson.uniq_id, 'male')}
+    />
+  </div>
+</div>
+
         )}
-
-
-
             <div className="modal-body">
               <div className="info-section">
                 <h3>Family Information</h3>
@@ -609,8 +692,16 @@ const handleSpouseTouch = (spouseName, e) => {
                   <div className="children-list">
                     {selectedPerson.children.map((child, index) => (
                       <div key={index} className="child-item">
-                        {child.name}
-                      </div>
+  <span>{child.name}</span>
+
+  <button
+    className="delete-child-btn"
+    onClick={() => handleDeleteChild(selectedPerson.uniq_id, child.uniq_id)}
+  >
+    ❌
+  </button>
+</div>
+
                     ))}
                   </div>
                 </div>
@@ -638,7 +729,7 @@ const handleSpouseTouch = (spouseName, e) => {
   <div className="modal-overlay" onClick={() => setSelectedSpouse(null)}>
     <div className="modal-content spouse-modal" onClick={(e) => e.stopPropagation()}>
       <button className="modal-close" onClick={() => setSelectedSpouse(null)}>
-        <X size={24} />
+        <X size={28} />
       </button>
       
       {selectedSpouse.spouse_image ? (
@@ -678,6 +769,22 @@ const handleSpouseTouch = (spouseName, e) => {
                   </div>
                   <div>
                     <h2>{selectedSpouse.name}</h2>
+                    
+                     
+   <button 
+  className="add-image-btn" 
+  onClick={() => document.getElementById("SpouseImageUpload").click()}>
+  ➕ Add Image
+</button>
+
+<input 
+  type="file" 
+  id="SpouseImageUpload"
+  style={{ display: "none" }}
+  accept="image/*"
+onChange={(e) => handleImageEdit(e, selectedSpouse.parent_uniq_id, 'female')}
+/>
+
                   </div>
                 </div>
         )}
