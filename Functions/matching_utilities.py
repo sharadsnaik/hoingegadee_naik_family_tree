@@ -1,7 +1,6 @@
 from deep_translator import GoogleTranslator
 import re, unicodedata
-from indic_transliteration import sanscript
-from indic_transliteration.sanscript import transliterate
+
 
 def normalized_and_convert_to_kan(name:str) -> str:
     if not name:
@@ -31,10 +30,42 @@ def normalized_and_convert_to_kan(name:str) -> str:
     
     except Exception as e:
         return name
-        # return " ".join(name.split()).lower().strip()
+        return " ".join(name.split()).lower().strip()
     
 # name = input('Name => ')
 # normalized_and_save(name)
+
+
+# from indic_transliteration import sanscript
+# from indic_transliteration.sanscript import transliterate
+# import unicodedata
+# import re
+
+# def normalized_and_convert_to_kan(name: str) -> str:
+#     if not name:
+#         return "unknown"
+
+#     try:
+#         # Normalize unicode safely
+#         name = unicodedata.normalize("NFKC", name).strip()
+
+#         # ✅ SPLIT by comma so each name is transliterated correctly
+#         parts = [p.strip() for p in name.split(",")]
+
+#         transliterated_parts = []
+#         for part in parts:
+#             # Convert English → Kannada SOUND BASED
+#             kn_text = transliterate(part, sanscript.ITRANS, sanscript.KANNADA)
+#             transliterated_parts.append(kn_text)
+
+#         # ✅ Join back with proper Kannada commas
+#         return " , ".join(transliterated_parts)
+
+#     except Exception as e:
+#         print("❌ Transliteration failed:", e)
+#         return name
+
+
 
 
 # function for matching full name, just name and more 

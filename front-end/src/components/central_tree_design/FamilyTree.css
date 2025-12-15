@@ -382,6 +382,19 @@ font-weight: 400;  gap: 20px;
     opacity: 1;
   }
 }
+.edit-btn {
+  background: #ff9800;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.edit-btn:hover {
+  background: #fb8c00;
+}
 
 .modal-content {
   background: white;

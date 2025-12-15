@@ -3,9 +3,9 @@ import { Users, Plus, X, PlusCircle } from 'lucide-react';
 import './Tree.css';
 
 const FamilyTree = () => {
-  const main_url = process.env.REACT_APP_BACKEND_URL;
+  // const main_url = process.env.REACT_APP_BACKEND_URL;
 
-  // const main_url = 'http://127.0.0.1:8000'
+  const main_url = 'http://127.0.0.1:8000'
   const [showPopup, setShowPopup] = useState(false);
   const [isSelectingSuggestion, setisSelectingSuggesion] = useState(false);
   const [familyData, setFamilyData] = useState([]);
